@@ -1,0 +1,30 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Never cancel an in-flight production deploy.
+concurrency:
+  cancel-in-progress: false
+  group: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Link Vercel project
+        run: npx vercel link --project=${{ vars.VERCEL_PROJECT_ID }} --scope=${{ vars.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }} --yes
+
+      - name: Pull Vercel environment
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
